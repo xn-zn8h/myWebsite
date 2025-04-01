@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rayn Website</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #241530, #000000);
+            height: 100vh;
+            color:bisque;
+            font-family: sans-serif;
+            display: flex;
+        }
+        p {
+            margin: 15px;
+        }
+        
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 100%;
+            will-change: transform, opacity;
+            transition: opacity 0.3s ease-out;
+        }
+        .center {
+            margin:auto;
+            width: 80%;
+        }
+        .left-pane {
+            flex: 1;
+        }
+
+        .left-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .right-pane {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .right-content {
+            width: 100%;
+            text-align: right;
+        }
+        
+        .flex-container {
+            display: flex;
+            justify-content: center;
+            flex-direction: row;
+            width: 100%;
+        }
+        a {
+            color:#73ddad;
+            text-decoration: none;
+            font-style: italic;
+            transition:0.3s;
+        }
+        a:hover {
+            letter-spacing: 20%;
+            text-decoration: underline #af47a17c;
+        }
+        ul {
+            padding: 0;
+            margin: 0;
+            text-align: right;
+            list-style: none;
+        }
+
+        li {
+            position: relative;
+            display: block;
+            margin: 5px 0;
+            padding-right: 15px;
+        }
+
+        li::before {
+            content: "⋆";
+            font-size: 1.5em;
+            padding-top: 0px;
+            padding-bottom: 0px;
+            color: #af47a17c;
+        }
+        .emphasis {
+            color: #95c98a;
+            font-family: monospace;
+            font-weight: bolder;
+            font-size: larger;
+            letter-spacing: 50%;
+        }
+        .left-horizontal {
+            width: 25em; 
+            margin-left: 0;
+        }
+        .slider {
+            -webkit-appearance: none;
+            width: 15em;
+            height: 5px;
+            background: bisque;
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            border-radius: 50%; 
+            cursor: pointer;
+        }
+        .slider::-moz-range-thumb {
+            width: 5px;
+            height: 25px;
+        }
+
+
+    </style>
+    <script>
+        // --- Animation Segment Starts Here ---
+        const config = {
+            starCount: 500,
+            minSize: 0.95,
+            maxSize: 2,
+            baseOpacity: 0.6,
+            maxOpacity: 1.0,
+            twinkleDuration: 100,
+            minTwinkleCooldown: 300,
+            maxTwinkleCooldown: 1800,
+            maxSpeed: 0.1,
+            boundsMargin: 50,
+            twinkleChance: 0.01
+        };
+        const starColors = ['#FFFFFF', '#5BCEFA', '#F5A9B8'];
+        
+        const stars = [];
+        let viewportWidth, viewportHeight;
+
+        function updateViewportDimensions() {
+            viewportWidth = window.innerWidth;
+            viewportHeight = window.innerHeight;
+        }
+
+        function createStars() {
+            const container = document.body;
+            updateViewportDimensions();
+            
+            for (let i = 0; i < config.starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                const x = Math.random() * viewportWidth;
+                const y = Math.random() * viewportHeight;
+                
+                const size = config.minSize + Math.pow(Math.random(), 2) * (config.maxSize - config.minSize);
+                
+                const color = starColors[Math.floor(Math.random() * starColors.length)];
+                
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.backgroundColor = color;
+                star.style.opacity = config.baseOpacity;
+                star.style.transform = `translate(${x}px, ${y}px)`;
+                
+                const starObj = {
+                    element: star,
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * config.maxSpeed,
+                    vy: (Math.random() - 0.5) * config.maxSpeed,
+                    isTwinkling: false,
+                    twinkleFrame: 0,
+                    cooldown: randomBetween(config.minTwinkleCooldown, config.maxTwinkleCooldown),
+                    nextTwinkleTime: 0
+                };
+                
+                stars.push(starObj);
+                container.appendChild(star);
+            }
+        }
+
+        function randomBetween(min, max) {
+            return min + Math.random() * (max - min);
+        }
+
+        function animateStars() {
+            updateViewportDimensions();
+            
+            stars.forEach(star => {
+                star.x += star.vx;
+                star.y += star.vy;
+
+                if (star.x < -config.boundsMargin) star.x = viewportWidth + config.boundsMargin;
+                if (star.x > viewportWidth + config.boundsMargin) star.x = -config.boundsMargin;
+                if (star.y < -config.boundsMargin) star.y = viewportHeight + config.boundsMargin;
+                if (star.y > viewportHeight + config.boundsMargin) star.y = -config.boundsMargin;
+                
+                star.element.style.transform = `translate(${star.x}px, ${star.y}px)`;
+                
+                if (star.isTwinkling) {
+                    star.twinkleFrame++;
+                    
+                    const progress = Math.min(star.twinkleFrame / config.twinkleDuration, 1);
+                    const brightness = progress < 0.5 ? 
+                        progress * 2 : 
+                        1 - ((progress - 0.5) * 2);
+                    
+                    star.element.style.opacity = config.baseOpacity + 
+                        (brightness * (config.maxOpacity - config.baseOpacity));
+                    
+                    if (star.twinkleFrame >= config.twinkleDuration) {
+                        star.isTwinkling = false;
+                        star.twinkleFrame = 0;
+                        star.cooldown = randomBetween(config.minTwinkleCooldown, config.maxTwinkleCooldown);
+                        star.nextTwinkleTime = performance.now() + star.cooldown * 16.67;
+                        star.element.style.opacity = config.baseOpacity;
+                    }
+                } else {
+                    if (performance.now() >= star.nextTwinkleTime) {
+                        if (Math.random() < config.twinkleChance) {
+                            star.isTwinkling = true;
+                            star.twinkleFrame = 0;
+                        }
+                    }
+                }
+            });
+            
+            requestAnimationFrame(animateStars);
+        }
+
+        //resize listenr
+        window.addEventListener('resize', updateViewportDimensions);
+
+        window.addEventListener('load', () => {
+            createStars();
+            const now = performance.now();
+            stars.forEach(star => {
+                star.nextTwinkleTime = now + star.cooldown * 16.67;
+            });
+            animateStars();
+        });
+
+        // --- Animation Segment Ends Here ---
+        // --- Audio Segment Starts Here ---
+        
+        let audioContext, noiseNode, gainNode, biquadFilter, lastOut = 0.0;
+        const params = { smoothing: 0.05, intensity: 0.8 };  // Softer parameters
+
+        function createNoiseProcessor() {
+            const processor = audioContext.createScriptProcessor(4096, 1, 1);
+            processor.onaudioprocess = function(e) {
+                const output = e.outputBuffer.getChannelData(0);
+                for (let i = 0; i < output.length; i++) {
+                    const white = Math.random() * 2 - 1;
+                    output[i] = (lastOut + (params.smoothing * white)) / (1 + params.smoothing);
+                    lastOut = output[i] * params.intensity;
+                }
+            };
+            return processor;
+        }
+
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                gainNode = audioContext.createGain();
+                gainNode.gain.value = 0;
+                
+                biquadFilter = audioContext.createBiquadFilter();
+                biquadFilter.type = "lowpass";
+                biquadFilter.frequency.setValueAtTime(500, audioContext.currentTime);
+                
+                noiseNode = createNoiseProcessor();
+                noiseNode.connect(biquadFilter).connect(gainNode).connect(audioContext.destination);
+            }
+        }
+
+        window.addEventListener('load', () => {
+            const slider = document.getElementById('volumeSlider');
+            slider.value = 0;
+
+            slider.addEventListener('input', function() {
+                const volume = this.value / 100;
+                
+                if (!audioContext) initAudio();
+                if (audioContext.state === 'suspended') audioContext.resume();
+                
+                gainNode.gain.setTargetAtTime(
+                    Math.pow(volume, 2),
+                    audioContext.currentTime,
+                    0.1
+                );
+                
+                if (volume === 0 && noiseNode) {
+                    noiseNode.disconnect();
+                } else if (volume > 0 && !noiseNode.connected) {
+                    noiseNode.connect(biquadFilter);
+                }
+            });
+        });
+    </script>
+</head>
+<!-- CONTENT ZONE DOWN HERE -->
+<body>
+    <div class="center">
+        <div class="flex-container">
+            <div class="left-pane">
+                <div class="left-content">
+                    <h1>welcome</h1>
+                    <p>to my corner of the webspace</p>
+                    <p>live and drink, traveller!</p>
+                </div>
+                <br><br><hr class="left-horizontal"><br><br>
+                <div class="left-content">
+                    <p>i hope to finish this site some day</p>
+                    <p>but i think it is pretty already</p>
+                    <p>just like you! ^^</p>
+                </div>
+            </div>
+            <div class="right-pane">
+                <div class="right-content">
+                    <h3>cool links</h3>
+                    <ul>
+                        <li><a href="https://brelkut.rayn.cc/" target="_blank" rel="noopener noreferrer">brełkut - click on it to enable sound (loud)</a></li>
+                        <li><a href="https://github.com/xn-zn8h" target="_blank" rel="noopener noreferrer">my github (not yet something to be proud of)</a></li>
+                        <li><a href="https://www.prequeladventure.com/2011/03/prequel-begin/" target="_blank" rel="noopener noreferrer">a cool webcomic if youve played tes oblivion</a></li>
+                        <li><a href="/">idk what else to put here</a></li>
+                    </ul>
+                </div>
+                <br><br><br>
+                <div class="right-content">
+                    <h4>thruster control</h4>
+                    <input type="range" id="volumeSlider" class="slider" min="0" max="100" value="0">
+            </div>
+        </div>
+    </div>
+</body>
+</html>
